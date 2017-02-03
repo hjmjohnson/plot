@@ -34,11 +34,11 @@
 
 using namespace plot;
 
-static volatile std::sig_atomic_t run = true;
+static volatile std::sig_atomic_t cntr_c_not_encountered = true;
 
 int main() {
     std::signal(SIGINT, [](int) {
-        run = false;
+        cntr_c_not_encountered = false;
     });
 
     TerminalInfo term;
@@ -53,7 +53,7 @@ int main() {
     auto y0 = rect.p1.y, A = size.y/2, N = size.x;
     float f = 2;
 
-    float t = 0.0f;
+
 
     auto sin = [N,f](float t, float x) {
         return std::sin(2*3.141592f*f*(t + x/N));
@@ -71,24 +71,30 @@ int main() {
         };
     };
 
+    float t = 0.0f;
+    constexpr Color firstColor{ 0.2f, 0.2f, 1.0f };
+    constexpr Color secondColor{ 1.0f, 0.4f, 0.4f };
     while (true) {
-        canvas.clear()
-              .stroke({ 0.2f, 0.2f, 1.0f }, rect, stroke_fn(sin, t))
-              .stroke({ 1.0f, 0.4f, 0.4f }, rect, stroke_fn(cos, t))
-              .line(term.foreground_color, { rect.p1.x, y0 + A }, { rect.p2.x, y0 + A }, TerminalOp::ClipSrc);
+        canvas.clear();
+        //Plot the sin wave
+        canvas.stroke(firstColor, rect, stroke_fn(sin, t));
+        //Plot the cos wave
+        canvas.stroke(secondColor, rect, stroke_fn(cos, t));
+        //Plot the center horizonal line at 0.0
+        canvas.line(term.foreground_color, { rect.p1.x, y0 + A }, { rect.p2.x, y0 + A }, TerminalOp::ClipSrc);
 
         for (auto const& line: layout)
             std::cout << term.clear_line() << line << '\n';
 
         std::cout << std::flush;
 
-        if (!run)
+        if (!cntr_c_not_encountered)
             break;
 
         using namespace std::chrono_literals;
         std::this_thread::sleep_for(40ms);
 
-        if (!run)
+        if (!cntr_c_not_encountered)
             break;
 
         t += 0.01f;
